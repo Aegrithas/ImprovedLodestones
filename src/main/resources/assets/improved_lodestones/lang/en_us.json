@@ -1,0 +1,14 @@
+{
+  "item.minecraft.compass.north_tooltip": "North",
+  "item.minecraft.compass.target_tooltip": "To %s",
+  "item.minecraft.compass.target_tooltip.another_dimension": "To %s in %s",
+  "item.minecraft.compass.target_tooltip.anonymous": "unnamed lodestone",
+  "dimension.minecraft.overworld.name": "The Overworld",
+  "dimension.minecraft.the_nether.name": "The Nether",
+  "dimension.minecraft.the_end.name": "The End",
+  "lodestoneScreen.title": "Lodestone",
+  "lodestoneScreen.name": "Name",
+  "lodestoneScreen.availability.anonymous": "This lodestone is anonymous",
+  "lodestoneScreen.availability.available": "This name is available",
+  "lodestoneScreen.availability.taken": "This name is taken"
+}

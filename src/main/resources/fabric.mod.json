@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "improved_lodestones",
+  "version": "${version}",
+  "name": "ImprovedLodestones",
+  "description": "",
+  "authors": [],
+  "contact": {
+    "repo": "https://github.com/Aegrithas/ImprovedLodestones"
+  },
+  "license": "All-Rights-Reserved",
+  "icon": "assets/improved_lodestones/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "blind.fold.improved_lodestones.client.ImprovedLodestonesClient"
+    ],
+    "main": [
+      "blind.fold.improved_lodestones.ImprovedLodestones"
+    ]
+  },
+  "mixins": [
+    "improved_lodestones.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  },
+  "accessWidener" : "improved_lodestones.accesswidener"
+}
