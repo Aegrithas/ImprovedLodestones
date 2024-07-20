@@ -4,7 +4,9 @@
   "version": "${version}",
   "name": "ImprovedLodestones",
   "description": "",
-  "authors": [],
+  "authors": [
+    "Aegrithas"
+  ],
   "contact": {
     "repo": "https://github.com/Aegrithas/ImprovedLodestones"
   },

@@ -1,8 +1,11 @@
 package blind.fold.improved_lodestones;
 
+import io.netty.buffer.ByteBuf;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.text.Text;
 
 import java.util.NoSuchElementException;
@@ -11,6 +14,29 @@ import java.util.Optional;
 public sealed interface LodestoneState {
   
   sealed interface Existing extends LodestoneState {
+    
+    PacketCodec<ByteBuf, Existing> PACKET_CODEC = new PacketCodec<>() {
+      
+      @Override
+      public Existing decode(ByteBuf buf) {
+        var type = Type.PACKET_CODEC.decode(buf);
+        return switch (type) {
+          case NAMED -> Named.PACKET_CODEC.decode(buf);
+          case ANONYMOUS -> Anonymous.PACKET_CODEC.decode(buf);
+          case DESTROYED -> throw new IllegalArgumentException("Expected a lodestone state that exists; got '%s'".formatted(Type.DESTROYED.key()));
+        };
+      }
+      
+      @Override
+      public void encode(ByteBuf buf, Existing value) {
+        Type.PACKET_CODEC.encode(buf, value.type());
+        switch (value) {
+          case Named named -> Named.PACKET_CODEC.encode(buf, named);
+          case Anonymous anonymous -> Anonymous.PACKET_CODEC.encode(buf, anonymous);
+        }
+      }
+      
+    };
     
     Serializer<Existing> SERIALIZER = new Serializer.Existing();
     
@@ -36,6 +62,7 @@ public sealed interface LodestoneState {
   record Named(@Override String name) implements Existing {
     
     public static final int MAX_NAME_LENGTH = 48;
+    public static final PacketCodec<ByteBuf, Named> PACKET_CODEC = PacketCodec.tuple(PacketCodecs.string(MAX_NAME_LENGTH), Named::name, Named::new);
     
     public Named {
       if (name == null || name.isEmpty()) throw new IllegalArgumentException("name must not be null or empty");
@@ -66,6 +93,8 @@ public sealed interface LodestoneState {
   
   record Anonymous() implements Existing {
     
+    public static final PacketCodec<ByteBuf, Anonymous> PACKET_CODEC = PacketCodec.unit(new Anonymous());
+    
     @Override
     public Type type() {
       return Type.ANONYMOUS;
@@ -84,6 +113,8 @@ public sealed interface LodestoneState {
   }
   
   record Destroyed() implements LodestoneState {
+    
+    public static final PacketCodec<ByteBuf, Destroyed> PACKET_CODEC = PacketCodec.unit(new Destroyed());
     
     @Override
     public Type type() {
@@ -112,6 +143,20 @@ public sealed interface LodestoneState {
     NAMED(Serializer.NAMED_ID, Serializer.NAMED_KEY, true, true),
     ANONYMOUS(Serializer.ANONYMOUS_ID, Serializer.ANONYMOUS_KEY, true, false),
     DESTROYED(Serializer.DESTROYED_ID, Serializer.NAMED_KEY, false, false);
+    
+    public static final PacketCodec<ByteBuf, Type> PACKET_CODEC = new PacketCodec<>() {
+      
+      @Override
+      public Type decode(ByteBuf buf) {
+        return fromId(buf.readByte());
+      }
+      
+      @Override
+      public void encode(ByteBuf buf, Type value) {
+        buf.writeByte(value.id());
+      }
+      
+    };
     
     private final byte id;
     
@@ -197,6 +242,30 @@ public sealed interface LodestoneState {
   boolean exists();
   
   Optional<LodestoneState.Existing> asExisting();
+  
+  PacketCodec<ByteBuf, LodestoneState> PACKET_CODEC = new PacketCodec<>() {
+    
+    @Override
+    public LodestoneState decode(ByteBuf buf) {
+      var type = Type.PACKET_CODEC.decode(buf);
+      return switch (type) {
+        case NAMED -> Named.PACKET_CODEC.decode(buf);
+        case ANONYMOUS -> Anonymous.PACKET_CODEC.decode(buf);
+        case DESTROYED -> Destroyed.PACKET_CODEC.decode(buf);
+      };
+    }
+    
+    @Override
+    public void encode(ByteBuf buf, LodestoneState value) {
+      Type.PACKET_CODEC.encode(buf, value.type());
+      switch (value) {
+        case Named named -> Named.PACKET_CODEC.encode(buf, named);
+        case Anonymous anonymous -> Anonymous.PACKET_CODEC.encode(buf, anonymous);
+        case Destroyed destroyed -> Destroyed.PACKET_CODEC.encode(buf, destroyed);
+      }
+    }
+    
+  };
   
   Serializer<LodestoneState> SERIALIZER = new Serializer.General();
   

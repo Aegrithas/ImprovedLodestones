@@ -74,8 +74,6 @@ public class LodestoneEditScreen extends Screen {
   
   @Override
   public void tick() {
-    super.tick();
-    this.nameTextField.tick();
     if (!this.canEdit()) {
       this.close();
     }
@@ -99,7 +97,7 @@ public class LodestoneEditScreen extends Screen {
   
   @Override
   public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-    this.renderBackground(context);
+    this.renderBackground(context, mouseX, mouseY, delta);
     context.drawCenteredTextWithShadow(this.textRenderer, LABEL_TEXT, this.width / 2, 20, 0xFFFFFF);
     super.render(context, mouseX, mouseY, delta);
   }

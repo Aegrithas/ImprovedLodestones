@@ -1,8 +1,8 @@
 package blind.fold.improved_lodestones;
 
-import net.minecraft.block.BlockRenderType;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.BlockWithEntity;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
@@ -13,6 +13,8 @@ import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.ItemActionResult;
+import net.minecraft.util.Util;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -22,8 +24,15 @@ import static blind.fold.improved_lodestones.PlayerEntityExt.openEditLodestoneSc
 
 public class LodestoneBlock extends BlockWithEntity {
   
+  public static final MapCodec<LodestoneBlock> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(createSettingsCodec()).apply(instance, LodestoneBlock::new));
+  
   public LodestoneBlock(Settings settings) {
     super(settings);
+  }
+  
+  @Override
+  protected MapCodec<LodestoneBlock> getCodec() {
+    return CODEC;
   }
   
   @Override
@@ -37,22 +46,32 @@ public class LodestoneBlock extends BlockWithEntity {
   }
   
   @Override
-  @SuppressWarnings("deprecation")
-  public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-    if (world.getBlockEntity(pos) instanceof LodestoneBlockEntity blockEntity && !player.getStackInHand(hand).isOf(Items.COMPASS)) {
-      if (!world.isClient) {
-        if (!this.isOtherPlayerEditing(player, blockEntity) && player.canModifyBlocks()) {
-          this.openEditScreen(player, blockEntity);
-          return ActionResult.SUCCESS;
-        } else {
-          return ActionResult.PASS;
-        }
-      } else {
-        return ActionResult.CONSUME;
-      }
-    } else {
+  protected ItemActionResult onUseWithItem(ItemStack stack, BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
+    if (!(world.getBlockEntity(pos) instanceof LodestoneBlockEntity)) {
+      return ItemActionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
+    }
+    if (world.isClient) {
+      return ItemActionResult.CONSUME;
+    }
+    if (player.getStackInHand(hand).isOf(Items.COMPASS)) {
+      return ItemActionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
+    }
+    return ItemActionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+  }
+  
+  @Override
+  protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
+    if (!(world.getBlockEntity(pos) instanceof LodestoneBlockEntity blockEntity)) {
       return ActionResult.PASS;
     }
+    if (world.isClient) {
+      Util.throwOrPause(new IllegalStateException("Expected to only call this on server"));
+    }
+    if (!this.isOtherPlayerEditing(player, blockEntity) && player.canModifyBlocks()) {
+      this.openEditScreen(player, blockEntity);
+      return ActionResult.SUCCESS;
+    }
+    return ActionResult.PASS;
   }
   
   @Override
@@ -65,7 +84,6 @@ public class LodestoneBlock extends BlockWithEntity {
   }
   
   @Override
-  @SuppressWarnings("deprecation")
   public void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
     super.onStateReplaced(state, world, pos, newState, moved);
     if (!state.isOf(newState.getBlock()) && world instanceof ServerWorld serverWorld) {
@@ -86,7 +104,7 @@ public class LodestoneBlock extends BlockWithEntity {
   
   @Override
   public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-    return checkType(type, ImprovedLodestones.LODESTONE_BLOCK_ENTITY, LodestoneBlockEntity::tick);
+    return validateTicker(type, ImprovedLodestones.LODESTONE_BLOCK_ENTITY, LodestoneBlockEntity::tick);
   }
   
 }

@@ -61,10 +61,17 @@ public class LodestoneBlockEntity extends BlockEntity {
       }
       if (!accepted) LOGGER.warn("Player {} just tried to give a lodestone a name that is already taken", player.getName().getString());
       this.setEditor(null);
+      // NOTE: as below (with writeNbt etc.), this should call this.world.updateListeners if data ever ends up getting stored in this block entity
     } else {
       LOGGER.warn("Player {} just tried to change non-editable lodestone", player.getName().getString());
     }
   }
+  
+  // NOTE: writeNbt, readNbt, toUpdatePacket, and toInitialChunkDataNbt are not used here because no data is actually stored in this block entity
+  //        (the only data here is currently stored in the LodestoneManager);
+  //        if any such data gets added at some point,
+  //        e.g., a button that gives this lodestone a name tag,
+  //        then those methods need to be added to sync the data between server and client.
   
   public boolean isPlayerTooFarToEdit(UUID uuid) {
     assert this.world != null;

@@ -8,10 +8,11 @@
     "ClientPlayPacketListenerMixin",
     "CompassItemMixin",
     "ItemMixin",
+    "ItemStackMixin",
     "MinecraftServerMixin",
-    "NetworkStateMixin",
     "PlayerEntityMixin",
     "PlayerManagerMixin",
+    "PlayStateFactoriesMixin",
     "ServerPlayerEntityMixin",
     "ServerPlayNetworkHandlerMixin",
     "ServerPlayPacketListenerMixin"

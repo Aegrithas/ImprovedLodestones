@@ -1,40 +1,41 @@
 package blind.fold.improved_lodestones;
 
-import net.minecraft.network.PacketByteBuf;
+import io.netty.buffer.ByteBuf;
+import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.Packet;
+import net.minecraft.network.packet.PacketType;
 import net.minecraft.util.math.GlobalPos;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static blind.fold.improved_lodestones.ClientPlayPacketListenerExt.onSynchronizedLodestones;
 
 public class SynchronizeLodestonesS2CPacket implements Packet<ClientPlayPacketListener> {
   
+  private static final PacketCodec<ByteBuf, Map<GlobalPos, LodestoneState.Existing>> STATES_CODEC = PacketCodecs.map(HashMap::new, GlobalPos.PACKET_CODEC, LodestoneState.Existing.PACKET_CODEC);
+  public static final PacketCodec<ByteBuf, SynchronizeLodestonesS2CPacket> CODEC = PacketCodec.tuple(STATES_CODEC, packet -> packet.states, SynchronizeLodestonesS2CPacket::new);
+  
   private final Map<GlobalPos, LodestoneState.Existing> states;
   
-  public SynchronizeLodestonesS2CPacket(Stream<Map.Entry<GlobalPos, LodestoneState.Existing>> states) {
-    this.states = states.collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
-  }
-  
-  public SynchronizeLodestonesS2CPacket(PacketByteBuf buf) {
-    this.states = buf.readMap(PacketByteBuf::readGlobalPos, LodestoneState.Existing.SERIALIZER::read);
-  }
-  
-  public Map<GlobalPos, LodestoneState.Existing> states() {
-    return this.states;
+  public SynchronizeLodestonesS2CPacket(Map<GlobalPos, LodestoneState.Existing> states) {
+    this.states = Map.copyOf(states);
   }
   
   @Override
-  public void write(PacketByteBuf buf) {
-    buf.writeMap(this.states, PacketByteBuf::writeGlobalPos, LodestoneState.Existing.SERIALIZER::write);
+  public PacketType<SynchronizeLodestonesS2CPacket> getPacketId() {
+    return ImprovedLodestones.PlayPackets.UPDATE_LODESTONES_JOIN;
   }
   
   @Override
   public void apply(ClientPlayPacketListener listener) {
     onSynchronizedLodestones(listener, this);
+  }
+  
+  public Map<GlobalPos, LodestoneState.Existing> getStates() {
+    return this.states;
   }
   
 }

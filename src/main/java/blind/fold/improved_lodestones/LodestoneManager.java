@@ -4,6 +4,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.nbt.*;
 import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.GlobalPos;
@@ -13,6 +14,7 @@ import net.minecraft.world.World;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class LodestoneManager {
@@ -43,7 +45,7 @@ public class LodestoneManager {
   public static LodestoneManager createClientLodestoneManager(Map<GlobalPos, LodestoneState.Existing> states) {
     var self = new LodestoneManager();
     for  (var entry : states.entrySet()) {
-      self.worlds.computeIfAbsent(entry.getKey().getDimension(), key -> WorldState.createEmpty()).setState(entry.getKey().getPos(), entry.getValue());
+      self.worlds.computeIfAbsent(entry.getKey().dimension(), key -> new WorldState()).setState(entry.getKey().pos(), entry.getValue());
     }
     return self;
   }
@@ -59,12 +61,12 @@ public class LodestoneManager {
   }
   
   public LodestoneState getState(GlobalPos pos) {
-    return getState(pos.getDimension(), pos.getPos());
+    return getState(pos.dimension(), pos.pos());
   }
   
   public boolean setState(RegistryKey<World> dimension, BlockPos pos, LodestoneState state) {
     if (state.exists()) {
-      var world = this.worlds.computeIfAbsent(dimension, key -> WorldState.createEmpty());
+      var world = this.worlds.computeIfAbsent(dimension, key -> new WorldState());
       return world.setState(pos, state);
     } else {
       var world = this.worlds.get(dimension);
@@ -74,7 +76,7 @@ public class LodestoneManager {
   }
   
   public boolean setState(GlobalPos pos, LodestoneState state) {
-    return setState(pos.getDimension(), pos.getPos(), state);
+    return setState(pos.dimension(), pos.pos(), state);
   }
   
   public boolean broadcastSetState(MinecraftServer server, RegistryKey<World> dimension, BlockPos pos, LodestoneState state) {
@@ -92,14 +94,18 @@ public class LodestoneManager {
     }
   }
   
-  public Stream<Map.Entry<GlobalPos, LodestoneState.Existing>> getStates() {
-    return this.worlds.entrySet().stream().flatMap(worldEntry -> worldEntry.getValue().getStates().map(posEntry -> Map.entry(GlobalPos.create(worldEntry.getKey(), posEntry.getKey()), posEntry.getValue())));
+  public Map<GlobalPos, LodestoneState.Existing> getStates() {
+    return this.worlds.entrySet().stream().flatMap(worldEntry -> worldEntry.getValue().getStates().map(posEntry -> Map.entry(GlobalPos.create(worldEntry.getKey(), posEntry.getKey()), posEntry.getValue()))).collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
   }
   
   protected static class WorldState extends PersistentState {
     
     protected final Set<String> usedNames;
     protected final Map<BlockPos, LodestoneState.Existing> states;
+    
+    public static PersistentState.Type<WorldState> getPersistentStateType() {
+      return new PersistentState.Type<>(WorldState::new, WorldState::fromNbt, null); // I think null is okay here? Fabric does it (see net.fabricmc.fabric.mixin.attachment.ServerWorldMixin)
+    }
     
     protected WorldState(Map<BlockPos, LodestoneState.Existing> states, Set<String> usedNames) {
       this.states = states;
@@ -115,13 +121,9 @@ public class LodestoneManager {
       this(new ConcurrentHashMap<>(), ConcurrentHashMap.newKeySet());
     }
     
-    public static WorldState createEmpty() {
-      return new WorldState();
-    }
-    
-    public static WorldState createFromNbt(NbtCompound nbt) {
-      var self = createEmpty();
-      self.readNbt(nbt);
+    public static WorldState fromNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
+      var self = new WorldState();
+      self.readNbt(nbt, registryLookup);
       return self;
     }
     
@@ -129,7 +131,7 @@ public class LodestoneManager {
       var world = server.getWorld(worldKey);
       if (world == null) return null;
       var stateManager = world.getPersistentStateManager();
-      return stateManager.getOrCreate(WorldState::createFromNbt, WorldState::createEmpty, ImprovedLodestones.MOD_ID);
+      return stateManager.getOrCreate(getPersistentStateType(), ImprovedLodestones.MOD_ID);
     }
     
     public boolean isStateAvailable(LodestoneState state) {
@@ -164,25 +166,25 @@ public class LodestoneManager {
       return this.states.entrySet().stream();
     }
     
-    public void readNbt(NbtCompound nbt) {
+    public void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
       var statesNbt = nbt.getList(LODESTONE_NAMES_KEY, NbtElement.COMPOUND_TYPE);
       if (statesNbt == null || statesNbt.isEmpty()) return;
       statesNbt.forEach(lodestoneElement -> {
         var lodestoneNbt = (NbtCompound) lodestoneElement;
-        var pos = BlockPos.CODEC.parse(NbtOps.INSTANCE, lodestoneNbt.get(LODESTONE_POS_KEY)).getOrThrow(false, message -> {});
+        var pos = BlockPos.CODEC.parse(NbtOps.INSTANCE, lodestoneNbt.get(LODESTONE_POS_KEY)).getOrThrow(RuntimeException::new);
         var state = LodestoneState.Existing.SERIALIZER.readNbt(lodestoneNbt);
         this.states.put(pos, state);
       });
     }
     
     @Override
-    public NbtCompound writeNbt(NbtCompound nbt) {
+    public NbtCompound writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
       if (this.states.isEmpty()) return nbt;
       var statesNbt = new NbtList();
       nbt.put(LODESTONE_NAMES_KEY, statesNbt);
       this.states.forEach((pos, state) -> {
         var lodestoneNbt = new NbtCompound();
-        lodestoneNbt.put(LODESTONE_POS_KEY, BlockPos.CODEC.encodeStart(NbtOps.INSTANCE, pos).getOrThrow(false, message -> {}));
+        lodestoneNbt.put(LODESTONE_POS_KEY, BlockPos.CODEC.encodeStart(NbtOps.INSTANCE, pos).getOrThrow(RuntimeException::new));
         LodestoneState.Existing.SERIALIZER.writeNbt(state, lodestoneNbt);
         statesNbt.add(lodestoneNbt);
       });

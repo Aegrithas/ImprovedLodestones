@@ -1,21 +1,22 @@
 package blind.fold.improved_lodestones.mixin;
 
-import net.minecraft.client.item.TooltipContext;
+import blind.fold.improved_lodestones.ItemExt;
+import net.minecraft.client.item.TooltipType;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
-import net.minecraft.world.World;
+import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.Unique;
 
 import java.util.List;
 
 @Mixin(Item.class)
-public abstract class ItemMixin {
+public abstract class ItemMixin implements ItemExt {
   
-  @Inject(method = "appendTooltip", at = @At("HEAD"))
-  protected void appendTooltip(ItemStack stack, World world, List<Text> tooltip, TooltipContext context, CallbackInfo info) {}
+  @Unique
+  @Override
+  public void appendPlayerTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType type, @NotNull PlayerEntity player) {}
   
 }
