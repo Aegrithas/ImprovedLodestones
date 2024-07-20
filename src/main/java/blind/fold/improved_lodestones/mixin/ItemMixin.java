@@ -1,7 +1,7 @@
 package blind.fold.improved_lodestones.mixin;
 
 import blind.fold.improved_lodestones.ItemExt;
-import net.minecraft.client.item.TooltipType;
+import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;

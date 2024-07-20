@@ -3,7 +3,7 @@ package blind.fold.improved_lodestones.mixin;
 import blind.fold.improved_lodestones.ImprovedLodestones;
 import blind.fold.improved_lodestones.LodestoneState;
 import com.llamalad7.mixinextras.sugar.Local;
-import net.minecraft.client.item.TooltipType;
+import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.LodestoneTrackerComponent;
 import net.minecraft.entity.Entity;
