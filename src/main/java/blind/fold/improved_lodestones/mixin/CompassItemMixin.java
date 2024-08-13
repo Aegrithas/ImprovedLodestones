@@ -15,6 +15,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.poi.PointOfInterestTypes;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -64,8 +65,9 @@ public abstract class CompassItemMixin extends ItemMixin {
   
   @Unique
   @Override
-  protected void appendTooltip(ItemStack stack, World world, List<Text> tooltip, TooltipContext context, CallbackInfo info) {
+  protected void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context, CallbackInfo info) {
     super.appendTooltip(stack, world, tooltip, context, info);
+    if (world == null) return;
     if (hasLodestone(stack)) {
       Text nameText;
       var nbt = stack.getNbt();
