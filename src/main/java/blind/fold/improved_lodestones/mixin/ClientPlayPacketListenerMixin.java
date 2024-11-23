@@ -20,4 +20,8 @@ public interface ClientPlayPacketListenerMixin extends ClientPlayPacketListenerE
   @Override
   void onLodestoneUpdate(LodestoneUpdateS2CPacket packet);
   
+  @Unique
+  @Override
+  void onGameRuleUpdate(GameRuleUpdateS2CPacket packet);
+  
 }

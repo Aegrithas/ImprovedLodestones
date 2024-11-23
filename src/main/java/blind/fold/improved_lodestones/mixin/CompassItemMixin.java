@@ -1,6 +1,7 @@
 package blind.fold.improved_lodestones.mixin;
 
 import blind.fold.improved_lodestones.ImprovedLodestones;
+import blind.fold.improved_lodestones.ImprovedLodestonesGameRules;
 import blind.fold.improved_lodestones.LodestoneState;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.Entity;
@@ -96,7 +97,8 @@ public abstract class CompassItemMixin extends ItemMixin {
         tooltip.add(tooltipText.setStyle(LODESTONE_TOOLTIP_STYLE));
       }
     } else {
-      tooltip.add(NORTH_TEXT);
+      var northText = world.getDimension().natural() || world.getGameRules().getBoolean(ImprovedLodestonesGameRules.NORTH_COMPASS_WORKS_EVERYWHERE) ? NORTH_TEXT : OBFUSCATED_TEXT;
+      tooltip.add(northText);
     }
   }
   

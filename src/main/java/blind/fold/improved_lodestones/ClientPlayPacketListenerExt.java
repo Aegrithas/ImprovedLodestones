@@ -10,6 +10,8 @@ public interface ClientPlayPacketListenerExt {
   
   void onLodestoneUpdate(LodestoneUpdateS2CPacket packet);
   
+  void onGameRuleUpdate(GameRuleUpdateS2CPacket packet);
+  
   static ClientPlayPacketListenerExt asExt(ClientPlayPacketListener self) {
     return (ClientPlayPacketListenerExt) self;
   }
@@ -24,6 +26,10 @@ public interface ClientPlayPacketListenerExt {
   
   static void onLodestoneUpdate(ClientPlayPacketListener self, LodestoneUpdateS2CPacket packet) {
     asExt(self).onLodestoneUpdate(packet);
+  }
+  
+  static void onGameRuleUpdate(ClientPlayPacketListener self, GameRuleUpdateS2CPacket packet) {
+    asExt(self).onGameRuleUpdate(packet);
   }
   
 }

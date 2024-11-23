@@ -9,16 +9,20 @@ import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.network.NetworkThreadUtils;
 import net.minecraft.network.listener.ClientPlayPacketListener;
+import net.minecraft.network.packet.s2c.play.PlayerRespawnS2CPacket;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import static blind.fold.improved_lodestones.PlayerEntityExt.openEditLodestoneScreen;
 
 @Environment(EnvType.CLIENT)
 @Mixin(ClientPlayNetworkHandler.class)
-public abstract class ClientPlayNetworkHandlerMixin implements  ClientPlayPacketListener, ClientPlayPacketListenerExt, ClientPlayNetworkHandlerExt {
+public abstract class ClientPlayNetworkHandlerMixin implements ClientPlayPacketListener, ClientPlayPacketListenerExt, ClientPlayNetworkHandlerExt {
   
   @Final
   @Shadow
@@ -27,6 +31,7 @@ public abstract class ClientPlayNetworkHandlerMixin implements  ClientPlayPacket
   @Shadow
   private ClientWorld world;
   
+  @Shadow private ClientWorld.Properties worldProperties;
   @Unique
   private LodestoneManager lodestoneManager = null;
   
@@ -62,6 +67,21 @@ public abstract class ClientPlayNetworkHandlerMixin implements  ClientPlayPacket
   public void onLodestoneUpdate(LodestoneUpdateS2CPacket packet) {
     NetworkThreadUtils.forceMainThread(packet, this, this.client);
     this.lodestoneManager.setState(packet.dimension(), packet.pos(), packet.state());
+  }
+  
+  @Unique
+  @Override
+  public void onGameRuleUpdate(GameRuleUpdateS2CPacket packet) {
+    NetworkThreadUtils.forceMainThread(packet, this, this.client);
+    assert this.client.world != null;
+    this.client.world.getGameRules().get(ImprovedLodestonesGameRules.NORTH_COMPASS_WORKS_EVERYWHERE).set(packet.northCompassWorksEverywhere(), null);
+  }
+  
+  @Inject(method = "onPlayerRespawn", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/world/ClientWorld;<init>(Lnet/minecraft/client/network/ClientPlayNetworkHandler;Lnet/minecraft/client/world/ClientWorld$Properties;Lnet/minecraft/registry/RegistryKey;Lnet/minecraft/registry/entry/RegistryEntry;IILjava/util/function/Supplier;Lnet/minecraft/client/render/WorldRenderer;ZJ)V"))
+  private void copyGameRulesToNewDimension(PlayerRespawnS2CPacket packet, CallbackInfo info) {
+    if (this.world != null) {
+      this.worldProperties.getGameRules().setAllValues(this.world.getGameRules(), null);
+    }
   }
   
 }

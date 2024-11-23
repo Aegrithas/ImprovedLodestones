@@ -23,7 +23,7 @@ public class ImprovedLodestones implements ModInitializer {
   
   @Override
   public void onInitialize() {
-  
+    ImprovedLodestonesGameRules.initialize();
   }
   
   public static LodestoneManager getLodestoneManager(World world) {

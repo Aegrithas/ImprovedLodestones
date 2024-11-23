@@ -1,5 +1,6 @@
 package blind.fold.improved_lodestones.mixin.client;
 
+import blind.fold.improved_lodestones.ImprovedLodestonesGameRules;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.item.ModelPredicateProviderRegistry;
@@ -18,7 +19,7 @@ public class ModelPredicateProviderRegistryMixin {
   
   @Inject(method = "method_43220", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/CompassItem;createSpawnPos(Lnet/minecraft/world/World;)Lnet/minecraft/util/math/GlobalPos;"), cancellable = true)
   private static void createNorthPos(ClientWorld world, ItemStack stack, Entity entity, CallbackInfoReturnable<GlobalPos> info) {
-    info.setReturnValue(entity.getWorld().getDimension().natural() ? GlobalPos.create(entity.getWorld().getRegistryKey(), entity.getBlockPos().north(100)) : null);
+    info.setReturnValue(entity.getWorld().getDimension().natural() || entity.getWorld().getGameRules().getBoolean(ImprovedLodestonesGameRules.NORTH_COMPASS_WORKS_EVERYWHERE) ? GlobalPos.create(entity.getWorld().getRegistryKey(), entity.getBlockPos().north(100)) : null);
   }
   
 }

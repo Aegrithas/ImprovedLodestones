@@ -10,5 +10,8 @@
   "lodestoneScreen.name": "Name",
   "lodestoneScreen.availability.anonymous": "This lodestone is anonymous",
   "lodestoneScreen.availability.available": "This name is available",
-  "lodestoneScreen.availability.taken": "This name is taken"
+  "lodestoneScreen.availability.taken": "This name is taken",
+  "gamerule.category.improved_lodestones": "Improved Lodestones",
+  "gamerule.northCompassWorksEverywhere": "North compass works everywhere",
+  "gamerule.northCompassWorksEverywhere.description": "Compasses that point north will work in all dimensions, rather than spinning aimlessly in \"unnatural\" dimensions like the nether and the end. Lodestone compasses are unaffected."
 }
